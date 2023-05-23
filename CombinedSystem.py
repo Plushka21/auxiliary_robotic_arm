@@ -1,5 +1,6 @@
 from Dynamixels import Dynamixels
 from Tmotor import Tmotor
+from Screwdriver import Screwdriver
 import os
 import time
 
@@ -27,10 +28,12 @@ class CombinedSystem:
     def __init__(self):
         self.tmotor = Tmotor()
         self.dynamixels = Dynamixels()
+        self.screwdriver = Screwdriver()
     
     def __del__(self):
         self.tmotor.__del__()
         self.dynamixels.__del__()
+        self.screwdriver.__del__()
     
     # TODO: fix functions to tun motors separately
     # def move_dynamixels(self, target_positions_arr, threshold=20, sleep_time=3):
