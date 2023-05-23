@@ -136,6 +136,8 @@ class Dynamixels:
 
     def move_motor(self, des_pos_dict, threshold):
         for ID, PROT in self.ID_PROT_DICT.items():
+            if ID not in des_pos_dict.keys():
+                continue
             # Write Dynamixel goal position depending on used protocol
             if PROT == 1:
                 dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(
@@ -149,25 +151,31 @@ class Dynamixels:
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
         
-        reached_motor_ID = []
-        while len(reached_motor_ID) < len(des_pos_dict.keys()):
-            for ID, PROT in self.ID_PROT_DICT.items():
-                if ID in reached_motor_ID:
-                    continue
-                # Read Dynamixel#1 present position depending on used protocol
-                if PROT == 1:
-                    dxl_present_position, dxl_comm_result, dxl_error = \
+        # reached_motor_ID = []
+        # while len(reached_motor_ID) < len(des_pos_dict.keys()):
+        return_data = {}
+        for ID, PROT in self.ID_PROT_DICT.items():
+            if ID not in des_pos_dict.keys():
+                continue
+            # if ID in reached_motor_ID:
+            #     continue
+            # Read Dynamixel#1 present position depending on used protocol
+            if PROT == 1:
+                dxl_present_position, dxl_comm_result, dxl_error = \
                         self.packetHandler.read2ByteTxRx(self.portHandler, ID, PRESENT_POSITION_1)
-                else:
-                    dxl_present_position, dxl_comm_result, dxl_error = \
+            else:
+                dxl_present_position, dxl_comm_result, dxl_error = \
                         self.packetHandler.read4ByteTxRx(self.portHandler, ID, PRESENT_POSITION_2)
-                if dxl_comm_result != COMM_SUCCESS:
-                    print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
-                elif dxl_error != 0:
-                    print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+            if dxl_comm_result != COMM_SUCCESS:
+                print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+            elif dxl_error != 0:
+                print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+            return_data[ID] = dxl_present_position
+        # print(return_data)
+        return return_data
                 
-                if des_pos_dict[ID] - dxl_present_position < threshold:
-                    reached_motor_ID.append(ID)
+            # if des_pos_dict[ID] - dxl_present_position < threshold:
+            #     reached_motor_ID.append(ID)
             
             # if not ((abs(goal_position[index] - pos_arr[0]) > 20) and (abs(goal_position[index] - pos_arr[1]) > 20)
             #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
