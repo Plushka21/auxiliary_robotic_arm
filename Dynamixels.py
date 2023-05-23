@@ -87,7 +87,7 @@ class Dynamixels:
         # Initialize PacketHandler instance
         # Set the protocol version
         # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
-        self.fpacketHandler = PacketHandler(PROTOCOL_VERSION)
+        self.packetHandler = PacketHandler(PROTOCOL_VERSION)
 
         self.ID_PROT_DICT = id_prot_dict
 

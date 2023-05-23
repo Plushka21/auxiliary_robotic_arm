@@ -252,22 +252,6 @@ class CANDevice:
         rawKd = (maxRawKd * kd) / self.motorParams["KD_MAX"]
 
         return int(rawPosition), int(rawVelocity), int(rawKp), int(rawKd), int(rawTorque)
-
-    def send_deg_command(self, p_des_deg, v_des_deg, kp, kd, tau_ff):
-        """
-        Function to send data to motor in physical units:
-        send_deg_command(position (deg), velocity (deg/s), kp, kd, Feedforward Torque (Nm))
-        Sends data over CAN, reads response, and prints the current status in deg, deg/s, amps.
-        If any input is outside limits, it is clipped. Only if torque is outside limits, a log
-        message is shown.
-        """
-        p_des_rad = math.radians(p_des_deg)
-        v_des_rad = math.radians(v_des_deg)
-
-        pos_rad, vel_rad, curr = self.send_rad_command(p_des_rad, v_des_rad, kp, kd, tau_ff)
-        pos = math.degrees(pos_rad)
-        vel = math.degrees(vel_rad)
-        return pos, vel, curr
     
     def convert_raw_to_physical_rad(self, positionRawValue, velocityRawValue, currentRawValue):
         """
@@ -299,10 +283,27 @@ class CANDevice:
     
     def display_data(self, degrees=True):
         if degrees:
-            return self.send_deg_command(0, 0, 0, 0, 0)
-        return self.send_rad_command(0, 0, 0, 0, 0)
+            return self.send_deg_command((0, 0, 0, 0, 0))
+        return self.send_rad_command((0, 0, 0, 0, 0))
 
-    def send_rad_command(self, p_des_rad, v_des_rad, kp, kd, tau_ff):
+    def send_deg_command(self, params):
+        """
+        Function to send data to motor in physical units:
+        send_deg_command(position (deg), velocity (deg/s), kp, kd, Feedforward Torque (Nm))
+        Sends data over CAN, reads response, and prints the current status in deg, deg/s, amps.
+        If any input is outside limits, it is clipped. Only if torque is outside limits, a log
+        message is shown.
+        """
+        p_des_deg, v_des_deg, kp, kd, tau_ff = params
+        p_des_rad = math.radians(p_des_deg)
+        v_des_rad = math.radians(v_des_deg)
+
+        pos_rad, vel_rad, curr = self.send_rad_command((p_des_rad, v_des_rad, kp, kd, tau_ff))
+        pos = math.degrees(pos_rad)
+        vel = math.degrees(vel_rad)
+        return pos, vel, curr
+    
+    def send_rad_command(self, params):
         """
         Function to send data to motor in physical units:
         send_rad_command(position (rad), velocity (rad/s), kp, kd, Feedforward Torque (Nm))
@@ -310,6 +311,7 @@ class CANDevice:
         If any input is outside limits, it is clipped. Only if torque is outside limits, a log
         message is shown.
         """
+        p_des_rad, v_des_rad, kp, kd, tau_ff = params
         # Check for Torque Limits
         if tau_ff < self.motorParams["T_MIN"]:
             print("Torque Commanded lower than the limit. Clipping Torque...")
