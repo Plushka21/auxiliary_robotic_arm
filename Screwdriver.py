@@ -6,7 +6,7 @@ POW_PIN_NUM = 3
 DIR_PIN_NUM = 7
 
 class Screwdriver:
-    def __init__(self, port="/dev/ttyACM0", MAX_SPEED=80):
+    def __init__(self, port="/dev/ttyACM0", MAX_SPEED=20):
         os.system(f"arduino --upload StandardFirmata/StandardFirmata.ino --port {port}")
         self.board = pyfirmata.Arduino(port)
         self.POW_PIN = self.board.get_pin(f'd:{POW_PIN_NUM}:p')
@@ -21,7 +21,7 @@ class Screwdriver:
             self.POW_PIN.write(0)
             self.board.digital[DIR_PIN_NUM].write(direction)
             time.sleep(1)
-            for i in range(50, self.MAX_SPEED):
+            for i in range(15, self.MAX_SPEED):
                 self.POW_PIN.write(i/255)
                 time.sleep(30/1000)
             time.sleep(time_to_run)
