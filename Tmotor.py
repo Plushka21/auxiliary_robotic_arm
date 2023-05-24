@@ -1,7 +1,11 @@
 from libs.can import CANDevice, CANSocket
+import os
     
 class Tmotor:
 	def __init__(self) -> None:
+		os.system("sudo slcand -o -c -s8 /dev/serial/by-id/usb-Protofusion_Labs_CANable_8c005eb_https\:__github.com_normaldotcom_cantact-fw.git_003B00405734570620393235-if00 can0")
+		os.system("sudo ifconfig can0 up")
+		os.system("sudo ifconfig can0")
 		self.can_bus = CANSocket()
 		self.encoder = CANDevice(can_bus=self.can_bus)
 		print("Created can_bus and encoder")
@@ -14,7 +18,7 @@ class Tmotor:
 	def set_zero_pos(self):
 		self.encoder.send_command(b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE") # Set zero position
 
-	def move_motor(self, des_pos_list, degrees, threshold=5):
+	def move_motor(self, des_pos_list, degrees=True, threshold=5):
 		for des_pos in des_pos_list:
 			try:
 			# pos = int(des_pos[0] + 2 * threshold)
