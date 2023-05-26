@@ -96,26 +96,31 @@ class CombinedSystem:
         for i in range(sleep_time):
             print(f"{sleep_time-i}..")
             time.sleep(1)
+        print()
         for target in all_targets:
             for i, pose in enumerate(target):
+                print(pose)
+                if i == 0:
+                    print("Move to first point\n")
+                elif i == 1:
+                    print("Turn on screwdriver and move to the hole\n")
+                    self.screwdriver.turn_on()
+                elif i == 2:
+                    print("Turn off screwdriver and move back\n")
+                    self.screwdriver.turn_off()
                 tmotor_des_pos = (pose[0], 0, t_Kp, t_Kd, 0)
                 dyn_des_pos = {ID:pose[i+1] for i,ID in enumerate(self.dynamixels.ID_PROT_DICT.keys())}
-
                 while (tmotor_des_pos is not None) or len(dyn_des_pos.keys()) > 0:
                     cur_tmotor_pos = self.tmotor.move_motor(
-                        des_pos_list=tmotor_des_pos, degrees=degrees, threshold=tmotor_threshold)
+                        des_pos=tmotor_des_pos, degrees=degrees, threshold=tmotor_threshold)
                     cur_dyn_pos_dict = self.dynamixels.move_motor(
                         des_pos_dict=dyn_des_pos, threshold=dyn_threshold)
                 
                     for ID in cur_dyn_pos_dict.keys():
                         if abs(cur_dyn_pos_dict[ID] - dyn_des_pos[ID]) < dyn_threshold:
                             del (dyn_des_pos[ID])
-                    if (tmotor_des_pos is not None) and abs(cur_tmotor_pos - tmotor_des_pos[0][0]) < tmotor_threshold:
+                    if (tmotor_des_pos is not None) and abs(cur_tmotor_pos - tmotor_des_pos[0]) < tmotor_threshold:
                         tmotor_des_pos = None
-                if i == 1:
-                    self.screwdriver.turn_on()
-                elif i == 2:
-                    self.screwdriver.turn_off
                 
                 print("Press any key to continue! (or press ESC to quit!)\n")
                 if getch() == chr(0x1b):
@@ -150,9 +155,9 @@ tmotor_targets = [[(i, 0, Kp, Kd, 0)] for i in range(0, 100, 90)] #[(0, 0, 2, 2,
 Kp = 10
 Kd = 3
 des_points_arr = [
-    [-610, 225, 255, np.radians(-90)], [-660, 225, 255, np.radians(-90)]]
+    [-610, 225, 255, np.radians(-90)]]#, [-660, 225, 255, np.radians(-90)]]
 master_arm_angles = [
-    [np.radians(30), np.radians(-30)], [np.radians(30), np.radians(-30)]]
+    [np.radians(30), np.radians(-30)]]#, [np.radians(30), np.radians(-30)]]
 all_targets = system_motors.get_des_positions(
     des_points_arr, master_arm_angles)
 system_motors.move_all_motors(all_targets)

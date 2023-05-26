@@ -34,6 +34,7 @@
 
 import os
 from dynamixel_sdk import *                    # Uses Dynamixel SDK library
+import numpy as np
 
 if os.name == 'nt':
     import msvcrt
@@ -133,18 +134,21 @@ class Dynamixels:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
             else:
                 print("Dynamixel#%d has been successfully connected" % ID)
-
+    def scale_position(self, pos_rad):
+        return int(pos_rad * 2 * np.pi / DXL_MAXIMUM_POSITION_VALUE)
+    
     def move_motor(self, des_pos_dict, threshold):
         for ID, PROT in self.ID_PROT_DICT.items():
             if ID not in des_pos_dict.keys():
                 continue
+            des_pos = self.scale_position(des_pos_dict[ID])
             # Write Dynamixel goal position depending on used protocol
             if PROT == 1:
                 dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(
-                    self.portHandler, ID, GOAL_POSITION_1, des_pos_dict[ID])
+                    self.portHandler, ID, GOAL_POSITION_1, des_pos)
             else:
                 dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
-                    self.portHandler, ID, GOAL_POSITION_2, des_pos_dict[ID])
+                    self.portHandler, ID, GOAL_POSITION_2, des_pos)
                 
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))

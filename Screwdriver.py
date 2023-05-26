@@ -4,7 +4,7 @@ import os
 
 POW_PIN_NUM = 3
 DIR_PIN_NUM = 7
-
+port = "/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_8563231393835120F042-if00"
 if os.name == 'nt':
     import msvcrt
 
@@ -26,7 +26,7 @@ else:
         return ch
 
 class Screwdriver:
-    def __init__(self, port="/dev/ttyACM0", MAX_SPEED=20):
+    def __init__(self, MAX_SPEED=20):
         os.system(f"arduino --upload StandardFirmata/StandardFirmata.ino --port {port}")
         self.board = pyfirmata.Arduino(port)
         self.POW_PIN = self.board.get_pin(f'd:{POW_PIN_NUM}:p')
@@ -38,12 +38,16 @@ class Screwdriver:
         self.board.digital[DIR_PIN_NUM].write(0)
     
     def test_relay(self):
+        print("Press any key to test relays")
+        if getch() == chr(0x1b):
+            self.__del__()
+
         print("Test if relays turn on and off simultaneously")
         self.board.digital[DIR_PIN_NUM].write(1)
         time.sleep(2)
         self.board.digital[DIR_PIN_NUM].write(0)
 
-        print("Press ESC if relay do not work in parallel because it may cause short circuit!\nOtherwise, click any key")
+        print("Press ESC if relay do not work in parallel because it may cause short circuit!\nOtherwise, click any key to continue")
         if getch() == chr(0x1b):
             self.__del__()
     
@@ -52,7 +56,7 @@ class Screwdriver:
             self.POW_PIN.write(0)
             self.board.digital[DIR_PIN_NUM].write(direction)
             time.sleep(1)
-            for i in range(15, self.MAX_SPEED):
+            for i in range(15, 20):#self.MAX_SPEED):
                 self.POW_PIN.write(i/255)
                 time.sleep(30/1000)
             if time_to_run is not None:
@@ -67,7 +71,7 @@ class Screwdriver:
         self.POW_PIN.write(0)
         self.board.digital[DIR_PIN_NUM].write(0)
 
-screw = Screwdriver(port="COM5")
-screw.turn_on()
-time.sleep(2)
-screw.turn_on(0)
+# screw = Screwdriver()
+# screw.turn_on(time_to_run=2)
+# time.sleep(2)
+# screw.turn_on(0)

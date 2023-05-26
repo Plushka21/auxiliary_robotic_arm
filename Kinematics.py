@@ -128,7 +128,7 @@ class Kinematics:
             # Manipulator reaches that pose, turns ON the screwdriver and starts parallel motion to the hole
             # When manipulator reaches hole, it turns OFF the screwdriver and moves back to the initial point
             # So for each given hole, we need 3 poses
-            approach_hole_forw_kin = hole_forw_kin * Tx(10)
+            approach_hole_forw_kin = hole_forw_kin * Tx(100)
             all_targets.append(
                 [approach_hole_forw_kin, hole_forw_kin, approach_hole_forw_kin])
         return all_targets
