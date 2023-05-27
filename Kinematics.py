@@ -67,7 +67,8 @@ class Kinematics:
         # current joints angles, initial values are 0
         self.angles = sp.Matrix([np.deg2rad(0.0) for _ in range(len(joints))]).evalf()
 
-    def forward_kinematics(self, q1m, q2m):
+    def forward_kinematics(self, angles):
+        q1m, q2m = np.radians(angles)
         q1, q2, q3, q4, q5 = self.joints
         T_base_0 = Rz(q1m) * Tz(l1_z) * Ty(l2_y) * \
             Ry(q2m) * Tz(l3_z) * Ty(l4_y)
@@ -122,8 +123,9 @@ class Kinematics:
     def targets_positions(self, holes_arr):
         all_targets = []
         for [tx, ty, tz, rz] in holes_arr:
+            rz_rad = np.radians(rz)
             # Compute the position and orientation of given hole
-            hole_forw_kin = Tx(tx)*Ty(ty)*Tz(tz)*Rz(rz)
+            hole_forw_kin = Tx(tx)*Ty(ty)*Tz(tz)*Rz(rz_rad)
             # Compute extra pose
             # Manipulator reaches that pose, turns ON the screwdriver and starts parallel motion to the hole
             # When manipulator reaches hole, it turns OFF the screwdriver and moves back to the initial point
@@ -143,18 +145,18 @@ class Kinematics:
         cur_step = 1
         for i, target in enumerate(all_targets):
             # For each given hole compute forward kinematics based on angles of master manipulator
-            forw_kin = self.forward_kinematics(
-                master_arm_angles[i][0], master_arm_angles[i][1])
+            forw_kin = self.forward_kinematics(angles=master_arm_angles[i])
             
             hole_sol = [] # list of solution triplets for each hole
             for pose in target:
-                print(f"Step {cur_step}/{num_steps}")
+                print(f"\nStep {cur_step}/{num_steps}")
                 cur_step += 1
 
                 des_pos, Jac_full_lambd, f_full_lambd = self.full_Jacobian_function(pose, forw_kin)
 
                 error, error_sqrt = self.compute_error(des_pos, f_full_lambd, self.angles)
                 while error_sqrt > max_dist:
+                    print(f"error: {error_sqrt} approaches {max_dist}", end='\r')
                     J_inv = self.inverse_Jacobian(Jac_full_lambd, self.angles)
                     
                     self.angles = (self.angles + dt *
@@ -174,17 +176,25 @@ class Kinematics:
                 # Update current angles
                 self.angles = sp.Matrix(angles_scaled)
                 # Save angles for current pose
-                hole_sol.append(angles_scaled)
+                # print(type(angles_scaled), type(np.float128(angles_scaled[0])))
+                angles_scaled_deg = [sp.deg(a).evalf() for a in angles_scaled]
+                hole_sol.append(angles_scaled_deg)
 
             # Save solution triplet for current hole
             all_angles_sol.append(hole_sol)
         print("Finished computing Inverse Kinematics")
         return all_angles_sol
 
-
+# q1, q2, q3, q4, q5 = sp.symbols('q1 q2 q3 q4 q5')
 # joints = [q1, q2, q3, q4, q5]
 # kin = Kinematics(joints)
 
+# des_points_arr = [[-610, 225, 255, -90]]
+# master_arm_angles = [[30, -30]]
+# all_targets = kin.inverse_kinematics(des_points_arr, master_arm_angles)
+# for target in all_targets:
+#     for pose in target:
+#         print(pose)
 # holes_arr = [[-610, 225, 255, sp.rad(-90)], [-660, 225, 255, sp.rad(-90)]]
 # q_sol_arr = kin.inverse_kinematics(
 #     holes_arr, [[np.radians(30), np.radians(-30)], [np.radians(30), np.radians(-30)]])
