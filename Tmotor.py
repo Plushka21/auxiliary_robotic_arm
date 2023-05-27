@@ -54,7 +54,7 @@ class Tmotor:
 # while des_pos:
 # 	pos = tmotor.move_motor(des_pos)
 # 	print(pos, end='\r')
-# 	if abs(pos) < 0.1:
+# 	if abs(pos) < 1:
 # 		des_pos = None
 
 # print(pos)

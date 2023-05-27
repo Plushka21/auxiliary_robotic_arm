@@ -74,14 +74,12 @@ PROFILE_SPEED_ADDR_2 = 112
 PROTOCOL_VERSION = 1.0  # See which protocol version is used in the Dynamixel
         
 BAUDRATE = 1000000             # Dynamixel default baudrate : 57600
-DEVICENAME = 'COM3' #'/dev/ttyUSB0'    # Check which port is being used on your controller
-# ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 DXL_MINIMUM_POSITION_VALUE = 0
 DXL_MAXIMUM_POSITION_VALUE = 4096
 
 class Dynamixels:
-    def __init__(self, id_prot_dict={1:1, 2:2, 3:2, 14:2}, max_speed=100) -> None:
+    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_prot_dict={1:1, 2:2, 3:2, 14:2}, max_speed=100) -> None:
         # Initialize PortHandler instance
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows

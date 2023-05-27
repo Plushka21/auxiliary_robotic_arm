@@ -84,7 +84,7 @@ class CombinedSystem:
     #         if getch() == chr(0x1b):
     #             break
     
-    def get_des_positions(self, des_points_arr, master_arm_angles):
+    def solve_inverse_kinematics(self, des_points_arr, master_arm_angles):
         return self.kinematics.inverse_kinematics(des_points_arr, master_arm_angles)
     
     def move_all_motors(self, all_targets, tmotor_threshold=5, t_Kp=5, t_Kd=3, 
@@ -107,20 +107,22 @@ class CombinedSystem:
                 elif i == 2:
                     print("Turn off screwdriver and move back\n")
                     self.screwdriver.turn_off()
+                
                 tmotor_des_pos = (pose[0], 0, t_Kp, t_Kd, 0)
-                print(pose)
-                print(tmotor_des_pos)
                 dyn_des_pos = {ID:self.dynamixels.degree_to_dxl(pose[i+1]) for i,ID in enumerate(self.dynamixels.ID_PROT_DICT.keys())}
-                while (tmotor_des_pos is not None) or len(dyn_des_pos.keys()) > 0:
+                while (tmotor_des_pos is not None) or len(dyn_des_pos) > 0:
                     if tmotor_des_pos is not None:
                         cur_tmotor_pos = self.tmotor.move_motor(
                             des_pos=tmotor_des_pos, degrees=degrees)
+                    
                     cur_dyn_pos_dict = self.dynamixels.move_motor(
                         des_pos_dict=dyn_des_pos)
-                
+
+                    # Check if any of dynamixels reached goal position
                     for ID in cur_dyn_pos_dict.keys():
                         if abs(cur_dyn_pos_dict[ID] - dyn_des_pos[ID]) < dyn_threshold:
                             del (dyn_des_pos[ID])
+                    # Check if tmotor reached goal position
                     if (tmotor_des_pos is not None) and abs(cur_tmotor_pos - tmotor_des_pos[0]) < tmotor_threshold:
                         tmotor_des_pos = None
                 
@@ -146,13 +148,12 @@ q1, q2, q3, q4, q5 = sp.symbols('q1 q2 q3 q4 q5')
 joints = [q1, q2, q3, q4, q5]
 system_motors = CombinedSystem(joints)
 
-# des_points_arr = [[-610, 225, 255, np.radians(-90)]]
+des_points_arr = [[-610, 225, 255, -90]]
+master_arm_angles = [[30, -30]]
+all_targets = system_motors.solve_inverse_kinematics(des_points_arr, master_arm_angles)
 
-# master_arm_angles = [[np.radians(30), np.radians(-30)]]
-# all_targets = system_motors.get_des_positions(
-#     des_points_arr, master_arm_angles)
-
+# print(all_targets)
 # Example
 # Note all angles are in degrees
-all_targets = [[[0, 0, 0, 0, 0], [90, 90, 90, 90, 90], [30, 30, 30, 30, 30]]]
-system_motors.move_all_motors(all_targets)
+# all_targets = [[[0, 0, 0, 0, 0], [90, 90, 90, 90, 90], [30, 30, 30, 30, 30]]]
+system_motors.move_all_motors(all_targets, tmotor_threshold=2, dyn_threshold=10)
