@@ -76,7 +76,7 @@ DEVICENAME = '/dev/ttyUSB0'    # Check which port is being used on your controll
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 DXL_MINIMUM_POSITION_VALUE = 0
-DXL_MAXIMUM_POSITION_VALUE = 4095
+DXL_MAXIMUM_POSITION_VALUE = 4096
 
 class Dynamixels:
     def __init__(self, id_prot_dict={1:1, 2:2, 3:2, 14:2}) -> None:
@@ -134,14 +134,23 @@ class Dynamixels:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
             else:
                 print("Dynamixel#%d has been successfully connected" % ID)
-    def scale_position(self, pos_rad):
-        return int(pos_rad * 2 * np.pi / DXL_MAXIMUM_POSITION_VALUE)
     
-    def move_motor(self, des_pos_dict, threshold):
-        for ID, PROT in self.ID_PROT_DICT.items():
-            if ID not in des_pos_dict.keys():
-                continue
-            des_pos = self.scale_position(des_pos_dict[ID])
+    def degree_to_dxl(self, value):
+        max_pos, max_deg = 4096, 360.
+
+        pos = int(round((max_pos - 1) * ((max_deg / 2 + float(value)) / max_deg), 0))
+        pos = min(max(pos, 0), max_pos - 1)
+
+        return pos
+
+    # def scale_position(self, pos_rad):
+    #     return int(pos_rad * DXL_MAXIMUM_POSITION_VALUE / (2 * np.pi))
+    
+    def move_motor(self, des_pos_dict):
+        for ID in des_pos_dict.keys():
+            PROT = self.ID_PROT_DICT[ID]
+            # des_pos = self.scale_position(des_pos_dict[ID])
+            des_pos = des_pos_dict[ID]
             # Write Dynamixel goal position depending on used protocol
             if PROT == 1:
                 dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(
@@ -158,9 +167,8 @@ class Dynamixels:
         # reached_motor_ID = []
         # while len(reached_motor_ID) < len(des_pos_dict.keys()):
         return_data = {}
-        for ID, PROT in self.ID_PROT_DICT.items():
-            if ID not in des_pos_dict.keys():
-                continue
+        for ID in des_pos_dict.keys():
+            PROT = self.ID_PROT_DICT[ID]
             # if ID in reached_motor_ID:
             #     continue
             # Read Dynamixel#1 present position depending on used protocol
@@ -185,18 +193,30 @@ class Dynamixels:
             #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
             #     break
 
-# Dynamixel will rotate between this value
-DXL1_MINIMUM_POSITION_VALUE = 0
-DXL1_MAXIMUM_POSITION_VALUE = 4095
-# and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
-DXL2_MINIMUM_POSITION_VALUE = 100
-DXL2_MAXIMUM_POSITION_VALUE = 4000
-# Dynamixel MX moving status threshold
-DXL1_MOVING_STATUS_THRESHOLD = 10
-# Dynamixel PRO moving status threshold
-DXL2_MOVING_STATUS_THRESHOLD = 20
+# dyn = Dynamixels()
+# # target = dyn.scale_position(-np.pi / 2)
+# target = dyn.degree_to_dxl(180)
+# print(target)
+# des_pos_dict = {1:target, 2:target, 3:target, 14:target}
+# while len(des_pos_dict) > 0:
+#     return_dict = dyn.move_motor(des_pos_dict)
+#     print(return_dict)
+#     for id, pos in return_dict.items():
+#         if abs(pos - des_pos_dict[id]) < 5:
+#             del(des_pos_dict[id])
 
-index = 0
+# # Dynamixel will rotate between this value
+# DXL1_MINIMUM_POSITION_VALUE = 0
+# DXL1_MAXIMUM_POSITION_VALUE = 4095
+# # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
+# DXL2_MINIMUM_POSITION_VALUE = 100
+# DXL2_MAXIMUM_POSITION_VALUE = 4000
+# # Dynamixel MX moving status threshold
+# DXL1_MOVING_STATUS_THRESHOLD = 10
+# # Dynamixel PRO moving status threshold
+# DXL2_MOVING_STATUS_THRESHOLD = 20
+
+# index = 0
 # Goal position of Dynamixel MX
 # goal_position = [DXL1_MINIMUM_POSITION_VALUE, DXL1_MAXIMUM_POSITION_VALUE]
 # Goal position of Dynamixel PRO

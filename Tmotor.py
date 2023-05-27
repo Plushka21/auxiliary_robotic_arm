@@ -18,7 +18,7 @@ class Tmotor:
 	def set_zero_pos(self):
 		self.encoder.send_command(b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE") # Set zero position
 
-	def move_motor(self, des_pos, degrees=True, threshold=5):
+	def move_motor(self, des_pos, degrees=True):
 		try:
 		# pos = int(des_pos[0] + 2 * threshold)
 		# while True:
@@ -47,3 +47,20 @@ class Tmotor:
 		except KeyboardInterrupt:
 			print('Disabled by interrupt')
 			self.encoder.send_command(7*b'\xFF' + b'\xFD') # Close motor mode
+
+
+# tmotor = Tmotor()
+# des_pos = (0, 0, 20, 5, 0)
+# while des_pos:
+# 	pos = tmotor.move_motor(des_pos)
+# 	print(pos, end='\r')
+# 	if abs(pos) < 0.1:
+# 		des_pos = None
+
+# print(pos)
+# while abs(pos) > 0.1:
+# 	print(pos, end='\r')
+# 	pos = tmotor.move_motor((0, 0, 10, 5, 0))
+# print(pos)
+
+# tmotor.display_data()

@@ -27,7 +27,7 @@ else:
 
 class Screwdriver:
     def __init__(self, MAX_SPEED=20):
-        os.system(f"arduino --upload StandardFirmata/StandardFirmata.ino --port {port}")
+        # os.system(f"arduino --upload StandardFirmata/StandardFirmata.ino --port {port}")
         self.board = pyfirmata.Arduino(port)
         self.POW_PIN = self.board.get_pin(f'd:{POW_PIN_NUM}:p')
         self.MAX_SPEED = MAX_SPEED
@@ -51,12 +51,12 @@ class Screwdriver:
         if getch() == chr(0x1b):
             self.__del__()
     
-    def turn_on(self, direction=1, time_to_run=None):
+    def turn_on(self, direction=0, time_to_run=None):
+        self.turn_off()
         if direction == 0 or direction == 1:
-            self.POW_PIN.write(0)
             self.board.digital[DIR_PIN_NUM].write(direction)
             time.sleep(1)
-            for i in range(15, 20):#self.MAX_SPEED):
+            for i in range(15, self.MAX_SPEED):
                 self.POW_PIN.write(i/255)
                 time.sleep(30/1000)
             if time_to_run is not None:
@@ -72,6 +72,6 @@ class Screwdriver:
         self.board.digital[DIR_PIN_NUM].write(0)
 
 # screw = Screwdriver()
-# screw.turn_on(time_to_run=2)
+# screw.turn_on()
 # time.sleep(2)
-# screw.turn_on(0)
+# screw.turn_off()
