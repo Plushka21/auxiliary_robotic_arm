@@ -152,13 +152,13 @@ init_dyn_pos = system_motors.dynamixels.get_current_pos(system_motors.dynamixels
 init_dyn_pos = [system_motors.dynamixels.dxl_to_degree(pos) for pos in init_dyn_pos.values()]
 init_system_pos = [init_tmotor_pos] + init_dyn_pos
 system_motors.kinematics.set_init_angles(init_system_pos)
-
+# print(init_system_pos)
 des_points_arr = [[-610, 225, 255, -90]]
 master_arm_angles = [[30, -30]]
 all_targets = system_motors.solve_inverse_kinematics(des_points_arr, master_arm_angles)
 
-# print(all_targets)
+print(all_targets)
 # Example
 # Note all angles are in degrees
-# all_targets = [[[0, 0, 0, 0, 0], [90, 90, 90, 90, 90], [30, 30, 30, 30, 30]]]
-system_motors.move_all_motors(all_targets, tmotor_threshold=2, dyn_threshold=10)
+all_targets = [[[0, 0, 0, 0, 0], [90, 90, 90, 90, 90], [30, 30, 30, 30, 30]]]
+system_motors.move_all_motors(all_targets, tmotor_threshold=5, dyn_threshold=10)
