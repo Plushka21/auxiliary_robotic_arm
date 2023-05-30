@@ -59,6 +59,7 @@ class Screwdriver:
             for i in range(15, self.MAX_SPEED):
                 self.POW_PIN.write(i/255)
                 time.sleep(30/1000)
+            time.sleep(2)
             if time_to_run is not None:
                 time.sleep(time_to_run)
                 self.POW_PIN.write(0)
@@ -70,6 +71,7 @@ class Screwdriver:
     def turn_off(self):
         self.POW_PIN.write(0)
         self.board.digital[DIR_PIN_NUM].write(0)
+        time.sleep(2)
 
 # screw = Screwdriver()
 # screw.turn_on()
