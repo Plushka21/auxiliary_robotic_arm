@@ -39,10 +39,11 @@ class Tmotor:
 		except KeyboardInterrupt:
 			print('Disabled by interrupt')
 			self.encoder.send_command(7*b'\xFF' + b'\xFD') # Close motor mode
+	
 	def get_current_pos(self, degrees=True):
 		pos = self.encoder.display_data()[0]
-		if degrees:
-			pos = np.degrees(pos)
+		if not degrees:
+			pos = np.radians(pos)
 		return pos
 	
 	def display_data(self):
