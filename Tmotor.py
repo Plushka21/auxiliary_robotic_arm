@@ -1,5 +1,6 @@
 from libs.can import CANDevice, CANSocket
 import os
+import numpy as np
     
 class Tmotor:
 	def __init__(self) -> None:
@@ -38,6 +39,11 @@ class Tmotor:
 		except KeyboardInterrupt:
 			print('Disabled by interrupt')
 			self.encoder.send_command(7*b'\xFF' + b'\xFD') # Close motor mode
+	def get_current_pos(self, degrees=True):
+		pos = self.encoder.display_data()[0]
+		if degrees:
+			pos = np.degrees(pos)
+		return pos
 	
 	def display_data(self):
 		try:

@@ -65,7 +65,8 @@ class Kinematics:
         # joints used in manipulator
         self.joints = joints 
         # current joints angles, initial values are 0
-        self.angles = sp.Matrix([np.deg2rad(0.0) for _ in range(len(joints))]).evalf()
+    def set_init_angles(self, angles):
+        self.angles = angles # sp.Matrix([np.deg2rad(0.0) for _ in range(len(joints))]).evalf()
 
     def forward_kinematics(self, angles):
         q1m, q2m = np.radians(angles)
