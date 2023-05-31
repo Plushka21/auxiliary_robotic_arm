@@ -147,11 +147,14 @@ class CombinedSystem:
 q1, q2, q3, q4, q5 = sp.symbols('q1 q2 q3 q4 q5')
 joints = [q1, q2, q3, q4, q5]
 system_motors = CombinedSystem(joints)
+
+# Set initial motor angles
 init_tmotor_pos = system_motors.tmotor.get_current_pos()
-init_dyn_pos = system_motors.dynamixels.get_current_pos(system_motors.dynamixels.ID_PROT_DICT)
+init_dyn_pos = system_motors.dynamixels.get_current_pos(system_motors.dynamixels.ID_LIST)
 init_dyn_pos = [system_motors.dynamixels.dxl_to_degree(pos) for pos in init_dyn_pos.values()]
 init_system_pos = [init_tmotor_pos] + init_dyn_pos
 system_motors.kinematics.set_init_angles(init_system_pos)
+
 # print(init_system_pos)
 des_points_arr = [[-610, 225, 255, -90]]
 master_arm_angles = [[30, -30]]

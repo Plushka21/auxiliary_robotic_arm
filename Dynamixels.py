@@ -71,15 +71,15 @@ PRESENT_POSITION_ADDR_2 = 132
 PROFILE_SPEED_ADDR_2 = 112
 
 # Protocol version
-PROTOCOL_VERSION = 1.0  # See which protocol version is used in the Dynamixel
+PROTOCOL_VERSION = 2.0  # See which protocol version is used in the Dynamixel
         
-BAUDRATE = 1000000             # Dynamixel default baudrate : 57600
+BAUDRATE = 3000000             # Dynamixel default baudrate : 57600
 
 DXL_MINIMUM_POSITION_VALUE = 0
 DXL_MAXIMUM_POSITION_VALUE = 4096
 
 class Dynamixels:
-    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_prot_dict={1:1, 2:2, 3:2, 14:2}, max_speed=100) -> None:
+    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_list=[2, 3, 14, 16], max_speed=100) -> None:
         # Initialize PortHandler instance
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -90,7 +90,7 @@ class Dynamixels:
         # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
         self.packetHandler = PacketHandler(PROTOCOL_VERSION)
 
-        self.ID_PROT_DICT = id_prot_dict
+        self.ID_LIST = id_list
 
         self.open_port()
         self.enable_torque()
@@ -120,13 +120,9 @@ class Dynamixels:
             quit()
     
     def set_max_velocity(self, max_speed):
-        for ID, PROT in self.ID_PROT_DICT.items():
-            if PROT == 1:
-                dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(
-                    self.portHandler, ID, PROFILE_SPEED_ADDR_1, 2*max_speed)
-            else:
-                dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
-                    self.portHandler, ID, PROFILE_SPEED_ADDR_2, max_speed)
+        for ID in self.ID_LIST:
+            dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
+                self.portHandler, ID, PROFILE_SPEED_ADDR_2, max_speed)
 
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
@@ -134,12 +130,9 @@ class Dynamixels:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
     
     def enable_torque(self):
-        for ID, PROT in self.ID_PROT_DICT.items():
-            # Enable Dynamixel Torque depending on used protocol
-            if PROT == 1:
-                ADDR_MX_TORQUE_ENABLE = TORQUE_ENABLE_ADDR_1
-            else:
-                ADDR_MX_TORQUE_ENABLE = TORQUE_ENABLE_ADDR_2
+        for ID in self.ID_LIST:
+            # Enable Dynamixel Torque
+            ADDR_MX_TORQUE_ENABLE = TORQUE_ENABLE_ADDR_2
 
             dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(
                 self.portHandler, ID, ADDR_MX_TORQUE_ENABLE, TORQUE_ENABLE)
@@ -165,17 +158,12 @@ class Dynamixels:
     
     def get_current_pos(self, des_pos_dict):
         return_data = {}
-        for ID in des_pos_dict.keys():
-            PROT = self.ID_PROT_DICT[ID]
+        for ID in self.ID_LIST:
             # if ID in reached_motor_ID:
             #     continue
-            # Read Dynamixel#1 present position depending on used protocol
-            if PROT == 1:
-                dxl_present_position, dxl_comm_result, dxl_error = \
-                    self.packetHandler.read2ByteTxRx(
-                        self.portHandler, ID, PRESENT_POSITION_ADDR_1)
-            else:
-                dxl_present_position, dxl_comm_result, dxl_error = \
+            # Read Dynamixel#1 present position
+            
+            dxl_present_position, dxl_comm_result, dxl_error = \
                     self.packetHandler.read4ByteTxRx(
                         self.portHandler, ID, PRESENT_POSITION_ADDR_2)
             if dxl_comm_result != COMM_SUCCESS:
@@ -186,16 +174,11 @@ class Dynamixels:
         return return_data
 
     def move_motor(self, des_pos_dict):
-        for ID in des_pos_dict.keys():
-            PROT = self.ID_PROT_DICT[ID]
+        for ID in self.ID_LIST:
             # des_pos = self.scale_position(des_pos_dict[ID])
             des_pos = des_pos_dict[ID]
             # Write Dynamixel goal position depending on used protocol
-            if PROT == 1:
-                dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(
-                    self.portHandler, ID, GOAL_POSITION_ADDR_1, des_pos)
-            else:
-                dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
+            dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
                     self.portHandler, ID, GOAL_POSITION_ADDR_2, des_pos)
                 
             if dxl_comm_result != COMM_SUCCESS:
@@ -216,12 +199,12 @@ class Dynamixels:
             #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
             #     break
 
-# dyn = Dynamixels()
+# dyn = Dynamixels(DEVICENAME='COM3')
 # # target = dyn.scale_position(-np.pi / 2)
 # targets = [dyn.degree_to_dxl(180), dyn.degree_to_dxl(-180)]
 # print(targets)
 # for t in targets:
-#     des_pos_dict = {1:t, 2:t, 3:t, 14:t}
+#     des_pos_dict = {2:t, 3:t, 14:t, 16:t}
 #     while len(des_pos_dict) > 0:
 #         return_dict = dyn.move_motor(des_pos_dict)
 #         # print(return_dict)
