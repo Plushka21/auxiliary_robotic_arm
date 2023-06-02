@@ -79,7 +79,7 @@ DXL_MINIMUM_POSITION_VALUE = 0
 DXL_MAXIMUM_POSITION_VALUE = 4096
 
 class Dynamixels:
-    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_list=[2, 3, 14, 16], max_speed=100) -> None:
+    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_list=[2, 3, 14, 16], max_speed=50) -> None:
         # Initialize PortHandler instance
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -91,10 +91,11 @@ class Dynamixels:
         self.packetHandler = PacketHandler(PROTOCOL_VERSION)
 
         self.ID_LIST = id_list
+        self.max_speed = max_speed
 
         self.open_port()
         self.enable_torque()
-        self.set_max_velocity(max_speed)
+        self.set_speed()
 
     def __del__(self):
         # Close port
@@ -119,15 +120,28 @@ class Dynamixels:
             getch()
             quit()
     
-    def set_max_velocity(self, max_speed):
-        for ID in self.ID_LIST:
+    def set_speed(self, id_speed_dict=None):
+        if id_speed_dict is None:
+            id_speed_dict = {ID: self.max_speed for ID in self.ID_LIST}
+        for ID, speed in id_speed_dict.items():
             dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
-                self.portHandler, ID, PROFILE_SPEED_ADDR_2, max_speed)
+                self.portHandler, ID, PROFILE_SPEED_ADDR_2, speed)
 
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+
+    def update_speed(self, target_pose):
+        cur_dyn_pose = np.array([self.get_current_pos(ID) for ID in self.ID_LIST])
+        target_pose = np.array([self.degree_to_dxl(pose) for pose in target_pose])
+
+        angle_paths = abs(target_pose - cur_dyn_pose)
+        max_angle = max(angle_paths)
+        max_time = max_angle / self.max_speed
+
+        upd_speed = {ID: int(path / max_time) for ID, path in zip(self.ID_LIST, angle_paths)}
+        self.set_speed(upd_speed)
     
     def enable_torque(self):
         for ID in self.ID_LIST:
@@ -170,6 +184,7 @@ class Dynamixels:
         elif dxl_error != 0:
             print("%s" % self.packetHandler.getRxPacketError(dxl_error))
 
+        # Return position in dynamixel scale
         return dxl_present_position
 
     def move_motor(self, des_pos_dict):
@@ -199,15 +214,10 @@ class Dynamixels:
             #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
             #     break
 
-dyn = Dynamixels(DEVICENAME='COM3', max_speed=50)
+# dyn = Dynamixels()
 
-# print(dyn.degree_to_dxl(360))
-
-# target = dyn.scale_position(-np.pi / 2)
 # angles = [0, 90, 0]
-# print(angles)
 # targets = [dyn.degree_to_dxl(a) for a in angles]
-# print(targets)
 # for t in targets:
 #     # print(f"Moving to {t}\n")
 #     des_pos_dict = {2:t, 3:t, 14:t, 16:t}
