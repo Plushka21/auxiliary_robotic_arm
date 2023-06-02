@@ -146,8 +146,9 @@ class Dynamixels:
     def degree_to_dxl(self, value):
         max_pos, max_deg = 4096, 360.
 
-        pos = int(round((max_pos - 1) * ((max_deg / 2 + float(value)) / max_deg), 0))
-        pos = min(max(pos, 0), max_pos - 1)
+        pos = int(round((max_pos - 1) * (float(value) / max_deg), 0))
+        pos = pos % (max_pos - 1)
+        # pos = min(max(pos, 0), max_pos - 1)
 
         return pos
     
@@ -156,25 +157,24 @@ class Dynamixels:
 
         return round(((max_deg * float(value)) / (max_pos - 1)) - (max_deg / 2), 2)
     
-    def get_current_pos(self, des_pos_dict):
-        return_data = {}
-        for ID in self.ID_LIST:
+    def get_current_pos(self, ID):
             # if ID in reached_motor_ID:
             #     continue
             # Read Dynamixel#1 present position
             
-            dxl_present_position, dxl_comm_result, dxl_error = \
-                    self.packetHandler.read4ByteTxRx(
-                        self.portHandler, ID, PRESENT_POSITION_ADDR_2)
-            if dxl_comm_result != COMM_SUCCESS:
-                print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
-            elif dxl_error != 0:
-                print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-            return_data[ID] = dxl_present_position
-        return return_data
+        dxl_present_position, dxl_comm_result, dxl_error = \
+                self.packetHandler.read4ByteTxRx(
+                    self.portHandler, ID, PRESENT_POSITION_ADDR_2)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+
+        return dxl_present_position
 
     def move_motor(self, des_pos_dict):
-        for ID in self.ID_LIST:
+        reutrn_data = {}
+        for ID in des_pos_dict:
             # des_pos = self.scale_position(des_pos_dict[ID])
             des_pos = des_pos_dict[ID]
             # Write Dynamixel goal position depending on used protocol
@@ -185,12 +185,12 @@ class Dynamixels:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-        
+            reutrn_data[ID] = self.get_current_pos(ID)
         # reached_motor_ID = []
         # while len(reached_motor_ID) < len(des_pos_dict.keys()):
         
         # print(return_data)
-        return self.get_current_pos(des_pos_dict)
+        return reutrn_data
                 
             # if des_pos_dict[ID] - dxl_present_position < threshold:
             #     reached_motor_ID.append(ID)
@@ -199,13 +199,22 @@ class Dynamixels:
             #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
             #     break
 
-# dyn = Dynamixels(DEVICENAME='COM3')
-# # target = dyn.scale_position(-np.pi / 2)
-# targets = [dyn.degree_to_dxl(180), dyn.degree_to_dxl(-180)]
+dyn = Dynamixels(DEVICENAME='COM3', max_speed=50)
+
+print(dyn.degree_to_dxl(0))
+
+# target = dyn.scale_position(-np.pi / 2)
+# angles = [0, 90, 0]
+# print(angles)
+# targets = [dyn.degree_to_dxl(a) for a in angles]
 # print(targets)
 # for t in targets:
+#     # print(f"Moving to {t}\n")
 #     des_pos_dict = {2:t, 3:t, 14:t, 16:t}
 #     while len(des_pos_dict) > 0:
+#         # cur_pos = {ID: dyn.get_current_pos(ID) for ID in dyn.ID_LIST}
+#         # print(list(cur_pos.values()), end='\r')
+
 #         return_dict = dyn.move_motor(des_pos_dict)
 #         # print(return_dict)
 #         for id, pos in return_dict.items():
