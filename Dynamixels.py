@@ -155,7 +155,7 @@ class Dynamixels:
     def dxl_to_degree(self, value):
         max_pos, max_deg = 4096, 360.
 
-        return round(((max_deg * float(value)) / (max_pos - 1)) - (max_deg / 2), 2)
+        return round(((max_deg * float(value)) / (max_pos - 1)), 2) % max_deg
     
     def get_current_pos(self, ID):
             # if ID in reached_motor_ID:
@@ -201,7 +201,7 @@ class Dynamixels:
 
 dyn = Dynamixels(DEVICENAME='COM3', max_speed=50)
 
-print(dyn.degree_to_dxl(0))
+# print(dyn.degree_to_dxl(360))
 
 # target = dyn.scale_position(-np.pi / 2)
 # angles = [0, 90, 0]
