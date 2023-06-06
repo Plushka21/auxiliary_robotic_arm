@@ -73,13 +73,13 @@ PROFILE_SPEED_ADDR_2 = 112
 # Protocol version
 PROTOCOL_VERSION = 2.0  # See which protocol version is used in the Dynamixel
         
-BAUDRATE = 3000000             # Dynamixel default baudrate : 57600
+BAUDRATE = 3000000      # Dynamixel default baudrate : 57600
 
 DXL_MINIMUM_POSITION_VALUE = 0
 DXL_MAXIMUM_POSITION_VALUE = 4096
 
 class Dynamixels:
-    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_list=[2, 3, 14, 16], max_speed=50) -> None:
+    def __init__(self, DEVICENAME = '/dev/ttyUSB0', id_list=[2, 3, 14, 16], max_speed=25) -> None:
         # Initialize PortHandler instance
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -132,9 +132,10 @@ class Dynamixels:
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
 
+    # Compute speed for each joint to synchronize joint motion
     def update_speed(self, target_pose):
         cur_dyn_pose = np.array([self.get_current_pos(ID) for ID in self.ID_LIST])
-        target_pose = np.array([self.degree_to_dxl(pose) for pose in target_pose])
+        target_pose = np.array(list(target_pose))
 
         angle_paths = abs(target_pose - cur_dyn_pose)
         max_angle = max(angle_paths)
@@ -157,25 +158,19 @@ class Dynamixels:
             else:
                 print("Dynamixel#%d has been successfully connected" % ID)
     
+    # Convert degree angle to encoder units
     def degree_to_dxl(self, value):
         max_pos, max_deg = 4096, 360.
-
-        pos = int(round((max_pos - 1) * (float(value) / max_deg), 0))
-        pos = pos % (max_pos - 1)
-        # pos = min(max(pos, 0), max_pos - 1)
-
+        pos = int(round((max_pos - 1) * (float(value) / max_deg), 0)) + (max_pos - 1)
         return pos
     
+    # Convert encoder units to degree angle
     def dxl_to_degree(self, value):
         max_pos, max_deg = 4096, 360.
-
-        return round(((max_deg * float(value)) / (max_pos - 1)), 2) % max_deg
+        return round(((max_deg * float(value - max_pos - 1)) / (max_pos - 1)), 2)
     
+    # Read data from encoder to get the current position
     def get_current_pos(self, ID):
-            # if ID in reached_motor_ID:
-            #     continue
-            # Read Dynamixel#1 present position
-            
         dxl_present_position, dxl_comm_result, dxl_error = \
                 self.packetHandler.read4ByteTxRx(
                     self.portHandler, ID, PRESENT_POSITION_ADDR_2)
@@ -188,11 +183,10 @@ class Dynamixels:
         return dxl_present_position
 
     def move_motor(self, des_pos_dict):
-        reutrn_data = {}
+        self.update_speed(des_pos_dict.values())
         for ID in des_pos_dict:
-            # des_pos = self.scale_position(des_pos_dict[ID])
             des_pos = des_pos_dict[ID]
-            # Write Dynamixel goal position depending on used protocol
+            # Write Dynamixel goal position
             dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
                     self.portHandler, ID, GOAL_POSITION_ADDR_2, des_pos)
                 
@@ -200,68 +194,16 @@ class Dynamixels:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-            reutrn_data[ID] = self.get_current_pos(ID)
-        # reached_motor_ID = []
-        # while len(reached_motor_ID) < len(des_pos_dict.keys()):
-        
-        # print(return_data)
-        return reutrn_data
-                
-            # if des_pos_dict[ID] - dxl_present_position < threshold:
-            #     reached_motor_ID.append(ID)
-            
-            # if not ((abs(goal_position[index] - pos_arr[0]) > 20) and (abs(goal_position[index] - pos_arr[1]) > 20)
-            #         and (abs(goal_position[index] - pos_arr[2]) > 20) and (abs(goal_position[index] - pos_arr[3]) > 20)):
-            #     break
 
 # dyn = Dynamixels()
 
-# angles = [0, 90, 0]
+# angles = [0]
 # targets = [dyn.degree_to_dxl(a) for a in angles]
+# print(targets)
+# print()
 # for t in targets:
 #     # print(f"Moving to {t}\n")
 #     des_pos_dict = {2:t, 3:t, 14:t, 16:t}
-#     while len(des_pos_dict) > 0:
-#         # cur_pos = {ID: dyn.get_current_pos(ID) for ID in dyn.ID_LIST}
-#         # print(list(cur_pos.values()), end='\r')
-
-#         return_dict = dyn.move_motor(des_pos_dict)
-#         # print(return_dict)
-#         for id, pos in return_dict.items():
-#             if abs(pos - des_pos_dict[id]) < 5:
-#                 del(des_pos_dict[id])
+#     dyn.move_motor(des_pos_dict)
 #     time.sleep(2)
-
-# # Dynamixel will rotate between this value
-# DXL1_MINIMUM_POSITION_VALUE = 0
-# DXL1_MAXIMUM_POSITION_VALUE = 4095
-# # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
-# DXL2_MINIMUM_POSITION_VALUE = 100
-# DXL2_MAXIMUM_POSITION_VALUE = 4000
-# # Dynamixel MX moving status threshold
-# DXL1_MOVING_STATUS_THRESHOLD = 10
-# # Dynamixel PRO moving status threshold
-# DXL2_MOVING_STATUS_THRESHOLD = 20
-
-# index = 0
-# Goal position of Dynamixel MX
-# goal_position = [DXL1_MINIMUM_POSITION_VALUE, DXL1_MAXIMUM_POSITION_VALUE]
-# Goal position of Dynamixel PRO
-# dxl2_goal_position = [DXL2_MINIMUM_POSITION_VALUE, DXL2_MAXIMUM_POSITION_VALUE]
-
-
-# # Disable Dynamixel#1 Torque
-# dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(
-#     portHandler, DXL1_ID, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
-# if dxl_comm_result != COMM_SUCCESS:
-#     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-# elif dxl_error != 0:
-#     print("%s" % packetHandler.getRxPacketError(dxl_error))
-
-# # Disable Dynamixel#2 Torque
-# dxl_comm_result, dxl_error = packetHandler2.write1ByteTxRx(
-#     portHandler, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE)
-# if dxl_comm_result != COMM_SUCCESS:
-#     print("%s" % packetHandler2.getTxRxResult(dxl_comm_result))
-# elif dxl_error != 0:
-#     print("%s" % packetHandler2.getRxPacketError(dxl_error))
+# print([dyn.get_current_pos(ID) for ID in dyn.ID_LIST])
