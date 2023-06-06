@@ -71,15 +71,17 @@ class CANSocket:
 
     def build_can_frame(self, can_id, data):
         can_dlc = len(data)
-        data = data.ljust(8, b'\x00')
+        # data = data.ljust(8, b'\x00')
         return struct.pack(self.frame_format, can_id, can_dlc, data)
 
     def parse_can_frame(self, frame):
         can_id, can_dlc, data = struct.unpack(self.frame_format, frame)
         return (can_id, can_dlc, data[:can_dlc])
 
-    def send_bytes(self, can_id, bytes_to_send):
-        self.frame = self.build_can_frame(can_id, bytes_to_send)
+    def send_bytes(self, can_id, data):
+        # self.frame = self.build_can_frame(can_id, bytes_to_send)
+        can_dlc = len(data)
+        self.frame = struct.pack(self.frame_format, can_id, can_dlc, data)
         self.socket.send(self.frame)
         # print('done')
 
@@ -248,7 +250,6 @@ class CANDevice:
         rawTorque = float_to_uint(tau_ff, self.motorParams["T_MIN"], self.motorParams["T_MAX"], 12)
 
         rawKp = (maxRawKp * kp) / self.motorParams["KP_MAX"]
-
         rawKd = (maxRawKd * kd) / self.motorParams["KD_MAX"]
 
         return int(rawPosition), int(rawVelocity), int(rawKp), int(rawKd), int(rawTorque)
