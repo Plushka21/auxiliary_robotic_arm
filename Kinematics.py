@@ -76,7 +76,7 @@ class Kinematics:
         T01 = Ry(q1) * Tx(-d1_x) * Ty(d1_y) * Tz(d1_z)
         T12 = Rx(q2) * Tx(-d2_x)
         T23 = Rz(q3) * Tx(-d3_x)
-        T34 = Rz(q4) * Tx(-d4_x)
+        T34 = Rz(-q4) * Tx(-d4_x)
         T45 = Rz(q5) * Tz(d5_z) * Tx(-d5_x)
 
         # Full transformation to end-effector
@@ -179,7 +179,7 @@ class Kinematics:
                 
                 # Save angles for current pose
                 angles_scaled_deg = [sp.deg(a).evalf() for a in angles_scaled]
-                angles_scaled_deg[3] = -angles_scaled_deg[3]
+                # angles_scaled_deg[3] = -angles_scaled_deg[3]
                 hole_sol.append(angles_scaled_deg)
 
             # Save solution triplet for current hole
