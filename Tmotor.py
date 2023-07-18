@@ -25,6 +25,9 @@ class Tmotor:
 		try:
 			t = 1
 			Kp_cur = Kp_init
+			pos_arr = []
+			# dt = 0.01
+			start_time = time.time()
 			# Move motor until position is in range of threshold from desired positions
 			while True:
 				des_pos = (target_pos, 0, Kp_cur, Kd, 0)
@@ -32,6 +35,11 @@ class Tmotor:
 					real_pos, vel, cur = self.encoder.send_deg_command(des_pos)
 				else:
 					real_pos, vel, cur = self.encoder.send_rad_command(des_pos)
+				pos_arr.append(real_pos)
+				# if not len(time_arr):
+				# 	time_arr.append(0)
+				# else:
+				# 	time_arr.append(time_arr[-1]+dt)
 				if display:
 					print(f"{round(real_pos, 2)} approaches {target_pos} with threshold {threshold}", end='\r', flush=False)
 				t += 1
@@ -39,11 +47,13 @@ class Tmotor:
 					Kp_cur += 0.5
 				if abs(real_pos - target_pos) < threshold:
 					break
+			time_arr = [time.time() - start_time]
 			# When motor reached desired pose, fix the motor with maximum Kp value
 			fix_pose = (real_pos, 0, self.encoder.motorParams['KP_MAX'], Kd, 0)
 			self.encoder.send_deg_command(fix_pose)
 			print(f"{round(real_pos, 2)} approached {target_pos} with threshold {threshold}")
-			return target_pos
+			# return target_pos, 
+			return pos_arr, time_arr
 		except KeyboardInterrupt:
 			print('Disabled by interrupt')
 			self.encoder.send_command(7*b'\xFF' + b'\xFD') # Close motor mode
@@ -69,13 +79,19 @@ class Tmotor:
 # time.sleep(3)
 # Kp_cur = 1
 # Kp_max = 10
-# tmotor = Tmotor()
-# tmotor.set_zero_pos()
-# print(tmotor.get_current_pos())
+tmotor = Tmotor()
+tmotor.set_zero_pos()
+print(tmotor.get_current_pos())
 # time.sleep(2)
-# p = 0
-# tmotor.move_motor(target_pos=p, Kp_init=1, threshold=2)
 # tmotor.disable_motor_mode()
+# p = 0
+pos_arr, time_arr = tmotor.move_motor(target_pos=0, Kp_init=1, threshold=0.1)
+# print(time_arr)
+# print(len(pos_arr))
+# print(len(time_arr))
+# file = open('ak_result.txt', 'w')
+# file.write(f"{pos_arr}\n{time_arr}")
+# file.close()
 
 # print(pos)
 # while abs(pos) > 0.1:
