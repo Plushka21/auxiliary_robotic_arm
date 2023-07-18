@@ -182,18 +182,44 @@ class Dynamixels:
         # Return position in dynamixel scale
         return dxl_present_position
 
+    # def move_motor(self, des_pos_dict):
+    #     self.update_speed(des_pos_dict.values())
+    #     for ID in des_pos_dict:
+    #         des_pos = des_pos_dict[ID]
+    #         # Write Dynamixel goal position
+    #         dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
+    #                 self.portHandler, ID, GOAL_POSITION_ADDR_2, des_pos)
+                
+    #         if dxl_comm_result != COMM_SUCCESS:
+    #             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+    #         elif dxl_error != 0:
+    #             print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+
     def move_motor(self, des_pos_dict):
         self.update_speed(des_pos_dict.values())
+        pos_dict_all = {ID: [] for ID in des_pos_dict}
+        full_time_dict = {ID: [0] for ID in des_pos_dict}
         for ID in des_pos_dict:
             des_pos = des_pos_dict[ID]
             # Write Dynamixel goal position
             dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(
                     self.portHandler, ID, GOAL_POSITION_ADDR_2, des_pos)
-                
+            
+            cur_pos = self.get_current_pos(ID)
+            pos_dict_all[ID].append(self.dxl_to_degree(cur_pos))
+            start_time = time.time()
+            dt = 0.01
+            while abs(des_pos - cur_pos) > 5:
+                # full_time_dict[ID].append(full_time_dict[ID][-1] + dt)
+                # time_arr.append(time_arr[-1]+dt)
+                cur_pos = self.get_current_pos(ID)
+                pos_dict_all[ID].append(self.dxl_to_degree(cur_pos))
+            full_time_dict[ID] = [time.time() - start_time]
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        return pos_dict_all, full_time_dict
 
 # dyn = Dynamixels()
 
@@ -207,3 +233,42 @@ class Dynamixels:
 #     dyn.move_motor(des_pos_dict)
 #     time.sleep(2)
 # print([dyn.get_current_pos(ID) for ID in dyn.ID_LIST])
+
+# dyn = Dynamixels()
+# angles = [0,0,0,0]
+# # angles = [30, 60, -30, 45]
+# targets = [dyn.degree_to_dxl(a) for a in angles]
+# # dyn.max_speed = 10
+# print(targets)
+# # print()
+# # for t in targets:
+# # print(f"Moving to {t}\n")
+# des_pos_dict = {2:targets[0], 3:targets[1], 14:targets[2], 16:targets[3]}
+# result, full_time_dict = dyn.move_motor(des_pos_dict)
+# for d_id in dyn.ID_LIST:
+#     print(full_time_dict[d_id])
+    # print(dyn.get_current_pos(d_id))
+    # time.sleep(2)
+# print([dyn.get_current_pos(ID) for ID in dyn.ID_LIST])
+# print(result)
+
+# import matplotlib.pyplot as plt
+
+# upd_result = {}
+# for ID, old_pos in result.items():
+#     upd_pos = [dyn.dxl_to_degree(p) for p in old_pos]
+#     upd_result[ID] = upd_pos
+# fig, ax = plt.subplots()
+# ax.plot(upd_result[2])
+# ax.plot(upd_result[3])
+# ax.plot(upd_result[14])
+# ax.plot(upd_result[16])
+
+# # fig.savefig("dxl_result.png")
+
+# file = open('dxl_result.txt', 'w')
+# for res in upd_result.items():
+#     file.write(f"{res}\n")
+# for time_res in full_time_dict.items():
+#     file.write(f"{time_res}\n")
+# file.close()
